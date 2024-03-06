@@ -7,6 +7,10 @@ const darcBtn = $("#darcmod-btn");
 const logo = $("#logo");
 const searchIcon = $(".bi-search");
 const bookmarcWrap = $(".bookmark-list");
+const toogleMenu = $(".toogle-menu");
+const toogleTitle = $("#toogl-title");
+const toogleMenuBtn = $("#toogl-menu-btn");
+const toogleMenuInfo = $(".toogl-menu-info");
 
 let besUrl = "https://www.googleapis.com/books/v1";
 
@@ -29,8 +33,10 @@ function logiOut() {
   localStorage.removeItem("token");
   window.location.href = "../../pages/login.html";
 }
+//-----------------------------------------------------------
 
-//---  https://www.googleapis.com/books/v1/volumes?q=computer science&startIndex=0&maxResults=3
+//----  https://www.googleapis.com/books/v1/volumes?q=computer science&startIndex=0&maxResults=3
+//--------respons data ----------------
 async function responsDat(url) {
   cardWrap.innerHTML = `<span class="loader"></span>`;
   let respons = await fetch(url + "/volumes?q=harry&startIndex=1");
@@ -40,6 +46,7 @@ async function responsDat(url) {
 }
 responsDat(besUrl);
 
+//--------------Render card-----------------
 function renderData(data) {
   cardWrap.innerHTML = "";
   resaltBooks.textContent = `Showing ${data.length} Result(s)`;
@@ -93,6 +100,7 @@ function renderData(data) {
 }
 //-----------------------------------------
 
+//--------------SEARCH BOOKS-------
 searchInput.addEventListener("keyup", (e) => {
   if (e.keyCode == 13 && e.target.value.trim().length) {
     let bookName = e.target.value;
@@ -111,6 +119,7 @@ async function serchBook(bookName) {
 }
 //-----------------------------------------------
 
+//---------------Bookmarkka qo'shish ------------
 cardWrap.addEventListener("click", (e) => {
   if (e.target.classList.contains("bookmark")) {
     let id = e.target.dataset.id;
@@ -131,10 +140,12 @@ async function getDataById(id) {
         renderBookmark();
         // toaster
       } else {
+        // toaster
       }
     } else {
       bookmarkList.push(resalt);
       renderBookmark();
+      // toaster
     }
   } catch (err) {
     console.log(err.masseg);
@@ -142,6 +153,7 @@ async function getDataById(id) {
 }
 //----------------------------------------------
 
+//---------------Bookmarkka renderlash ------------
 function renderBookmark() {
   bookmarcWrap.innerHTML = "";
   bookmarkList.forEach((el) => {
@@ -167,7 +179,9 @@ function renderBookmark() {
   });
 }
 renderBookmark();
+//-------------------------------------------------
 
+//--------------------Bookmarcdan o'chirish--------
 bookmarcWrap.addEventListener("click", (e) => {
   if (e.target.classList.contains("delete-book")) {
     let deletBookId = e.target.dataset.id;
@@ -176,9 +190,77 @@ bookmarcWrap.addEventListener("click", (e) => {
     localStorage.setItem("bookmark", JSON.stringify(bookmarkFilter));
     bookmarkList = JSON.parse(localStorage.getItem("bookmark"));
     renderBookmark();
+    // window.location.reload()
+  }
+});
+//-------------------------------------------------
+
+//---------------Toogle menu function----------------------
+cardWrap.addEventListener("click", (e) => {
+  if (e.target.classList.contains("book-more")) {
+    let id = e.target.dataset.id;
+    toogleMenu.classList.toggle("hide-toogle-menu");
+    tooglInfo(id);
   }
 });
 
+async function tooglInfo(id) {
+  try {
+    let response = await fetch(`${besUrl}/volumes/${id}`);
+    let result = await response.json();
+    toogleMenuInfo.innerHTML = `<span class="loader"></span>`;
+    renderTooglInfo(result.volumeInfo);
+  } catch (err) {
+    console.log(err.masseg);
+  }
+}
+//-------------------------------------------------
+function renderTooglInfo(obj) {
+  toogleMenuInfo.textContent = "";
+  toogleTitle.textContent = `${
+    obj.title.length > 35 ? obj.title.slice(0, 32) + "..." : obj.title
+  }`;
+  let infoCantent = render(
+    "div",
+    "",
+    `
+  <img src="${obj.imageLinks.thumbnail}" alt="img" class="mx-auto mb-[51px]">
+  <p class="px-[40px] mb-[50px] text-[#58667E]">${obj.title}</p>
+  <p class="px-[40px] flex items-center gap-4 mb-4">
+      <strong  class="text-[#222531]">Author :</strong>
+      <span class="text-[#0D75FF] py-[5px] px-5 bg-[rgba(13,117,255,0.09)] rounded-[30px]">${obj.authors}</span>
+  </p>
+  <p class="px-[40px] flex items-center gap-4 mb-4">
+      <strong  class="text-[#222531]">Published : </strong>
+      <span class="text-[#0D75FF] py-[5px] px-5 bg-[rgba(13,117,255,0.09)] rounded-[30px]">${obj.publishedDate}</span>
+  </p>
+  <p class="px-[40px] flex items-center gap-4 mb-4">
+      <strong  class="text-[#222531]">Publishers:</strong>
+      <span class="text-[#0D75FF] py-[5px] px-5 bg-[rgba(13,117,255,0.09)] rounded-[30px]">${obj.publisher}</span>
+  </p>
+  <p class="px-[40px] flex items-center gap-4 mb-4">
+      <strong  class="text-[#222531]">Categories:</strong>
+      <span class="text-[#0D75FF] py-[5px] px-5 bg-[rgba(13,117,255,0.09)] rounded-[30px]">${obj.categories}</span>
+  </p>
+  <p class="px-[40px] flex items-center gap-4 mb-4">
+      <strong  class="text-[#222531]">Pages Count:</strong>
+      <span class="text-[#0D75FF] py-[5px] px-5 bg-[rgba(13,117,255,0.09)] rounded-[30px]">${obj.printedPageCount}</span>
+  </p>
+  <div class="py-4 px-5  flex justify-end mt-[50px]">
+      <a href="${obj.previewLink}" class="py-1 px-8 rounded-sm bg-[#75828A] text-white text-center">Read</a>
+  </div>
+  `
+  );
+  toogleMenuInfo.appendChild(infoCantent);
+}
+//-------------------------------------------
+
+//---------------------Toogle menu btn ---------
+toogleMenuBtn.addEventListener("click", () => {
+  toogleMenu.classList.toggle("hide-toogle-menu");
+});
+
+//--DARC mode---------------------
 darcBtn.addEventListener("click", () => {
   darcBtn.classList.toggle("darc-btn");
   if (darcBtn.classList.contains("darc-btn")) {
